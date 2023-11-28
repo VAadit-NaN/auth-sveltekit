@@ -1,6 +1,9 @@
 import { z } from 'zod';
 
 export const userSchema = z.object({
+	username: z
+		.string({ required_error: 'Username is required' })
+		.trim(),
 	email: z
 		.string({ required_error: 'Email is required' })
 		.email({ message: 'Please enter a valid email address' }),
@@ -21,6 +24,25 @@ export const userSchema = z.object({
 	createdAt: z.date().optional(),
 	updatedAt: z.date().optional()
 });
+
+
+export const eventSchema = z.object({
+	event_title: z
+		.string({ required_error: 'title is required' })
+		.trim(),
+	description: z
+		.string(),
+	start: z
+		.string({ required_error: 'start-time is required' })
+		.transform((str) => new Date(str)),
+	end: z
+		.string({ required_error: 'end-time is required' })
+		.transform((str) => new Date(str)),
+	token: z.string().optional(),
+	createdAt: z.date().optional(),
+	updatedAt: z.date().optional()
+});
+
 
 export const userUpdatePasswordSchema = userSchema
 	.pick({ password: true, confirmPassword: true })

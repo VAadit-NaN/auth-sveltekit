@@ -1,66 +1,51 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { setError, superValidate } from 'sveltekit-superforms/server';
-// import { auth } from '$lib/server/lucia';
 import { userSchema } from '$lib/config/zod-schemas';
 
-const signInSchema = userSchema.pick({
+const signUpSchema = userSchema.pick({
+    username: true,
 	email: true,
-	password: true
+	password: true,
+    confirmPassword: true
 });
 
-interface LoginResponse {
-	authentication: {
-	  password: string;
-	  salt: string;
-	  sessionToken: string;
-	};
-	_id: string;
-	username: string;
-	email: string;
-	__v: number;
-  }
- 
-
-
 export const load = async (event) => {
-	// const session = await event.locals.auth.validate();
-	// if (session) throw redirect(302, '/dashboard');
-	// const form = await superValidate(event, signInSchema);
-	// return {
-	// 	form
-	// };
 };
 
-const login: Action = async(event) => {
-	const form = await superValidate(event, signInSchema);
+
+const signup: Action = async(event) => {
+	const form = await superValidate(event, signUpSchema);
 
 	if (!form.valid) {
 		return fail(400, {
 			form
 		});
 	}
-	console.log(form.data);
+	const payload = {
+        username: form.data.username,
+        email: form.data.email,
+        password: form.data.password
+    }
 
 	try {
 		console.log('sign in user');
 	
-		const response = await fetch('https://planpal-backend-xig7.onrender.com/auth/login', {
+		const response = await fetch('https://planpal-backend-xig7.onrender.com/auth/register', {
 			method: 'POST',
 			headers: {
 			'Content-Type': 'application/json',
 			},
-			body: JSON.stringify(form.data),
+			body: JSON.stringify(payload),
 		})
 
 		if (!response.ok) {
 			throw new Error(`HTTP error! Status: ${response.status}`);
 		  }
 	  
-		  const result: LoginResponse = await response.json();
+		  const result = await response.json();
 		  console.log(result);
 		  const sess: string = result["authentication"]["sessionToken"];
-		  
-			event.locals.userid = result["_id"];
+
 		  cookies.set('session', sess, {
 			// send cookie for every page
 			path: '/',
@@ -76,14 +61,11 @@ const login: Action = async(event) => {
 		  })
 	} catch (e) {
 		//TODO: need to return error message to client
-		// return setError(form, '', ['The email or password is incorrect']);
-		console.log(event.locals.userid);
-		throw redirect(302, '/eventcal');
+		return setError(form, '', ['The email or password is incorrect']);
 	}
-
 
 	throw redirect(302, '/eventcal');
 }
 
 
-export const actions = { login };
+export const actions = { signup };
